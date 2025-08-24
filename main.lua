@@ -5,52 +5,55 @@ local LocalPlayer = Players.LocalPlayer
 local TextChatService = game:GetService("TextChatService")
 
 local function sendToDiscord(message)
-    request({
-        Url = webhook,
-        Method = "POST",
-        Headers = {["Content-Type"] = "application/json"},
-        Body = HttpService:JSONEncode({
-            ["username"] = "Server Chat Logger",
-            ["content"] = message
-        })
-    })
+    spawn(function() -- run in a new thread
+        local success, err = pcall(function()
+            request({
+                Url = webhook,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({
+                    ["username"] = "Server Chat Logger",
+                    ["content"] = message
+                })
+            })
+        end)
+        if not success then
+            warn("Failed to send message to Discord:", err)
+        end
+    end)
 end
 
 TextChatService.OnIncomingMessage = function(message)
     if message.TextSource and message.TextSource.UserId then
         local player = Players:GetPlayerByUserId(message.TextSource.UserId)
-        if player then
-            local wrapped = message.Text
+        if not player then return end
 
-            -- Bold messages from friends
-            pcall(function()
-                if LocalPlayer:IsFriendsWith(player.UserId) then
-                    wrapped = "**"..wrapped.."**"
-                end
-            end)
+        local wrapped = message.Text
 
-            local finalMessage = ""
-
-            if message.ChannelName == "All" then
-                -- Public message
-                finalMessage = "🟢 "..player.Name..": "..wrapped
-            elseif message.ChannelName == "Team" then
-                -- Team message
-                local teamName = player.Team and player.Team.Name or "Unknown Team"
-                finalMessage = "⚪ "..player.Name..": "..wrapped.." ["..teamName.."]"
-            else
-                -- Private message
-                local recipientName = "Unknown"
-                if message.TextSource.TargetUserId then
-                    local recipient = Players:GetPlayerByUserId(message.TextSource.TargetUserId)
-                    if recipient then
-                        recipientName = recipient.Name
-                    end
-                end
-                finalMessage = "👁 "..player.Name..": "..wrapped.." ["..player.Name.." to "..recipientName.."]"
+        pcall(function()
+            if LocalPlayer:IsFriendsWith(player.UserId) then
+                wrapped = "**"..wrapped.."**"
             end
+        end)
 
-            sendToDiscord(finalMessage)
+        local finalMessage = ""
+
+        if message.ChannelName == "All" then
+            finalMessage = "🟢 "..player.Name..": "..wrapped
+        elseif message.ChannelName == "Team" then
+            local teamName = player.Team and player.Team.Name or "Unknown Team"
+            finalMessage = "⚪ "..player.Name..": "..wrapped.." ["..teamName.."]"
+        else
+            local recipientName = "Unknown"
+            if message.TextSource.TargetUserId then
+                local recipient = Players:GetPlayerByUserId(message.TextSource.TargetUserId)
+                if recipient then
+                    recipientName = recipient.Name
+                end
+            end
+            finalMessage = "👁 "..player.Name..": "..wrapped.." ["..player.Name.." to "..recipientName.."]"
         end
+
+        sendToDiscord(finalMessage)
     end
 end
