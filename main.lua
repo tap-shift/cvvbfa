@@ -1,6 +1,7 @@
 -- ===== SETTINGS =====
 local webhook = "https://discord.com/api/webhooks/1409104663575265370/vtt87aQssj-wRFIwHb2PAJbZyEdbAW1SzPpZDc2J6MqfD1o4Ia7WAdbBVwQ4nFf-3HAt"
-local pingwhenuser = "ilnytuk" 
+local pingwhenuser = {"ilnytuk", "Anonymous27261738"} 
+local pingwhenjoin = {"ilnytuk", "Anonymous27261738"}
 local pingme = "1058386462892105829" 
 local youprefix = "🟢"
 local otherprefix = "⚪"
@@ -25,6 +26,15 @@ local function sendToDiscord(message)
     })
 end
 
+local function isTrackedUser(list, name)
+    for _, uname in ipairs(list) do
+        if name == uname then
+            return true
+        end
+    end
+    return false
+end
+
 local function formatMessage(player, msg)
     local prefix = otherprefix
     pcall(function()
@@ -35,7 +45,7 @@ local function formatMessage(player, msg)
         end
     end)
     local finalMsg = prefix.." ["..player.Name.."]: "..msg
-    if shouldPing and player.Name == pingwhenuser then
+    if shouldPing and isTrackedUser(pingwhenuser, player.Name) then
         finalMsg = "<@"..pingme.."> "..finalMsg
     end
     return finalMsg
@@ -52,6 +62,11 @@ for _, player in ipairs(Players:GetPlayers()) do
 end
 
 Players.PlayerAdded:Connect(function(player)
+    local joinMsg = "# ["..player.Name.."] has joined!"
+    if shouldPing and isTrackedUser(pingwhenjoin, player.Name) then
+        joinMsg = "<@"..pingme.."> "..joinMsg
+    end
+    sendToDiscord(joinMsg)
     player.Chatted:Connect(function(msg)
         onChat(player, msg)
     end)
