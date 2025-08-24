@@ -1,6 +1,6 @@
 -- ===== SETTINGS =====
 local webhook = "https://discord.com/api/webhooks/1409104663575265370/vtt87aQssj-wRFIwHb2PAJbZyEdbAW1SzPpZDc2J6MqfD1o4Ia7WAdbBVwQ4nFf-3HAt"
-local pingwhenuser = "Anonymous27261738" 
+local pingwhenuser = "ilnytuk" 
 local pingme = "1058386462892105829" 
 local youprefix = "🟢"
 local otherprefix = "⚪"
